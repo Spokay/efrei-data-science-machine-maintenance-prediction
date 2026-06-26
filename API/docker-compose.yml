@@ -9,7 +9,7 @@ services:
     networks:
         - nginx_proxy_manager_network
     volumes:
-      - models:/app/models
+      - ./models:/app/models
     environment:
       - MODEL_PATH=/app/models/XGBoost.pkl
       - ALLOWED_ORIGINS=*
@@ -17,9 +17,6 @@ services:
 
 
 
-volumes:
-  models:
-    driver: local
 
 networks:
   nginx_proxy_manager_network:
