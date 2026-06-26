@@ -3,6 +3,7 @@ uvicorn[standard]>=0.29
 numpy>=1.26
 pandas>=2.2
 pydantic>=2.6
+pydantic-settings>=2.0
 joblib>=1.3
 scikit-learn>=1.9
 # pinné: le pickle du modèle a été entraîné avec une version < 3.x ;

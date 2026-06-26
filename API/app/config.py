@@ -1,11 +1,14 @@
-import os
 from pathlib import Path
+from typing import Any
+
+from pydantic import computed_field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-class Settings:
-    """Configuration centralisée de l'API, surchargeable via variables d'environnement."""
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     API_TITLE: str = "Predictive Maintenance API"
     API_DESCRIPTION: str = (
@@ -14,19 +17,12 @@ class Settings:
     )
     API_VERSION: str = "0.1.0"
 
-    # Modèle candidat final : pipeline scikit-learn (ColumnTransformer + XGBClassifier)
-    # sérialisé via joblib. Le pipeline embarque tout le preprocessing
-    # (imputation, scaling, one-hot encoding).
-    MODEL_PATH: str = os.getenv("MODEL_PATH", str(BASE_DIR / "models" / "XGBoost.pkl"))
+    MODEL_PATH: str = str(BASE_DIR / "models" / "XGBoost.pkl")
 
     TASK: str = "classification_multiclasse"
     TARGET_VARIABLE: str = "failure_type"
-
-    # Classe représentant "pas de défaillance" parmi les classes prédites.
     NO_FAILURE_LABEL: str = "none"
 
-    # Ordre des classes en sortie du modèle (= clf.classes_ = [0, 1, 2, 3, 4]).
-    # index 0 → bearing, 1 → electrical, 2 → hydraulic, 3 → motor_overheat, 4 → none
     CLASS_LABELS: list[str] = [
         "bearing",
         "electrical",
@@ -35,9 +31,6 @@ class Settings:
         "none",
     ]
 
-    # Features brutes attendues par le pipeline (cf. ColumnTransformer "prep"),
-    # AVANT preprocessing. L'API les transmet telles quelles ; le pipeline se
-    # charge de l'imputation/scaling/encodage.
     NUMERIC_FEATURES: list[str] = [
         "vibration_rms",
         "temperature_motor",
@@ -48,13 +41,24 @@ class Settings:
         "ambient_temp",
     ]
     CATEGORICAL_FEATURES: list[str] = ["machine_type", "operating_mode"]
-    RAW_FEATURES: list[str] = NUMERIC_FEATURES + CATEGORICAL_FEATURES
 
-    # Catégories valides (cf. OneHotEncoder.categories_ entraîné).
     MACHINE_TYPES: list[str] = ["CNC", "Compressor", "Pump", "Robotic Arm"]
     OPERATING_MODES: list[str] = ["idle", "normal", "peak"]
 
-    ALLOWED_ORIGINS: list[str] = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+    # Accepte "http://a.com,http://b.com" ou '["http://a.com"]' depuis l'env.
+    ALLOWED_ORIGINS: list[str] = ["*"]
+
+    @computed_field
+    @property
+    def RAW_FEATURES(self) -> list[str]:
+        return self.NUMERIC_FEATURES + self.CATEGORICAL_FEATURES
+
+    @field_validator("ALLOWED_ORIGINS", mode="before")
+    @classmethod
+    def parse_allowed_origins(cls, v: Any) -> list[str]:
+        if isinstance(v, str):
+            return v.split(",")
+        return v
 
 
 settings = Settings()

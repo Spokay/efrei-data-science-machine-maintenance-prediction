@@ -13,7 +13,7 @@ def model_info() -> ModelInfoResponse:
     info = model_service.get_info()
     return ModelInfoResponse(
         model_name="predictive-maintenance-failure-type-classifier",
-        model_type=info["model_type"],
+        model_type=info.model_type,
         task=settings.TASK,
         target_variable=settings.TARGET_VARIABLE,
         numeric_features=settings.NUMERIC_FEATURES,
@@ -22,7 +22,7 @@ def model_info() -> ModelInfoResponse:
             "machine_type": settings.MACHINE_TYPES,
             "operating_mode": settings.OPERATING_MODES,
         },
-        n_features_after_preprocessing=info["n_features_after_preprocessing"],
+        n_features_after_preprocessing=info.n_features_after_preprocessing,
         class_labels=settings.CLASS_LABELS,
         no_failure_label=settings.NO_FAILURE_LABEL,
         version=settings.API_VERSION,

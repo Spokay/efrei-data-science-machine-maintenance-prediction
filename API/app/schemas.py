@@ -87,6 +87,13 @@ class HealthResponse(BaseModel):
     timestamp: datetime
 
 
+class ModelInfo(BaseModel):
+    """Métadonnées internes du pipeline chargé, retournées par ModelService.get_info()."""
+
+    model_type: Optional[str] = None
+    n_features_after_preprocessing: Optional[int] = None
+
+
 class ModelInfoResponse(BaseModel):
     model_name: str
     model_type: Optional[str] = Field(None, description="Type du pipeline chargé (étapes scikit-learn)")

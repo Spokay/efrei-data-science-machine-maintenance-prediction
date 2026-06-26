@@ -16,5 +16,4 @@ def predict(data: SensorData) -> PredictResponse:
     503 est levée automatiquement si le modèle n'est pas chargé (gérée par
     l'exception handler global, voir main.py).
     """
-    result = model_service.predict(data.model_dump())
-    return PredictResponse(**result)
+    return model_service.predict(data)

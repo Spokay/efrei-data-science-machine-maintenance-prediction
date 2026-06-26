@@ -3,18 +3,19 @@ import pytest
 
 from app.exceptions import ModelOutputError
 from app.model_service import FailureTypeModelService
+from app.schemas import SensorData
 
-VALID_FEATURES = {
-    "vibration_rms": 2.35,
-    "temperature_motor": 68.4,
-    "current_phase_avg": 9.1,
-    "pressure_level": 58.2,
-    "rpm": 1450.0,
-    "hours_since_maintenance": 120.0,
-    "ambient_temp": 13.5,
-    "machine_type": "Pump",
-    "operating_mode": "normal",
-}
+VALID_FEATURES = SensorData(
+    vibration_rms=2.35,
+    temperature_motor=68.4,
+    current_phase_avg=9.1,
+    pressure_level=58.2,
+    rpm=1450.0,
+    hours_since_maintenance=120.0,
+    ambient_temp=13.5,
+    machine_type="Pump",
+    operating_mode="normal",
+)
 
 
 class _FakeClassifier:
@@ -57,10 +58,10 @@ def test_predict_picks_highest_probability_class():
 
     result = service.predict(VALID_FEATURES)
 
-    assert result["predicted_class"] == "bearing"
-    assert result["is_failure"] is True
-    assert result["probability"] == pytest.approx(0.74, rel=1e-3)
-    assert result["class_probabilities"]["bearing"] == pytest.approx(0.74, rel=1e-3)
+    assert result.predicted_class == "bearing"
+    assert result.is_failure is True
+    assert result.probability == pytest.approx(0.74, rel=1e-3)
+    assert result.class_probabilities["bearing"] == pytest.approx(0.74, rel=1e-3)
 
 
 def test_predict_returns_none_when_no_failure_class_dominant():
@@ -68,8 +69,8 @@ def test_predict_returns_none_when_no_failure_class_dominant():
 
     result = service.predict(VALID_FEATURES)
 
-    assert result["predicted_class"] == "none"
-    assert result["is_failure"] is False
+    assert result.predicted_class == "none"
+    assert result.is_failure is False
 
 
 def test_predict_raises_on_class_count_mismatch():
@@ -84,6 +85,6 @@ def test_get_info_reports_pipeline_metadata():
 
     info = service.get_info()
 
-    assert info["n_features_after_preprocessing"] == 14
-    assert "prep" in info["model_type"]
-    assert "clf" in info["model_type"]
+    assert info.n_features_after_preprocessing == 14
+    assert "prep" in info.model_type
+    assert "clf" in info.model_type
