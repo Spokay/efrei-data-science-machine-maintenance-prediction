@@ -1,14 +1,27 @@
 services:
-  api:
+  prediction-defaillance-api:
     build:
       context: .
       tags:
         - registry.spokayhub.top/efrei-prediction-defaillance:latest
     ports:
       - "8000:8000"
+    networks:
+        - nginx_proxy_manager_network
     volumes:
-      - ./models:/app/models
+      - models:/app/models
     environment:
       - MODEL_PATH=/app/models/XGBoost.pkl
       - ALLOWED_ORIGINS=*
     restart: unless-stopped
+
+
+
+volumes:
+  models:
+    driver: local
+
+networks:
+  nginx_proxy_manager_network:
+    external: true
+    name: nginx_proxy_manager_nginx_network
