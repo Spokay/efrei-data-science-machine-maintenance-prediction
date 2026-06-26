@@ -5,6 +5,7 @@ Usage:
     python src/train.py
 """
 
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -19,7 +20,7 @@ from sklearn.metrics import classification_report
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.class_weight import compute_class_weight
 
-from config import FEATURES_CAT, FEATURES_NUM, FIGURES_DIR, METRICS_DIR, MODELS_DIR
+from config import API_MODELS_DIR, FEATURES_CAT, FEATURES_NUM, FIGURES_DIR, METRICS_DIR, MODELS_DIR
 from evaluation import (
     compute_metrics,
     cross_validate_model,
@@ -227,6 +228,11 @@ def main():
     best = max(all_metrics, key=lambda x: x["recall_macro"])
     print(f"\nBest model by Recall macro: {best['model']}  "
           f"Recall={best['recall_macro']}  F1={best['f1_macro']}")
+
+    API_MODELS_DIR.mkdir(parents=True, exist_ok=True)
+    dest = API_MODELS_DIR / "XGBoost.pkl"
+    shutil.copy2(MODELS_DIR / "XGBoost.pkl", dest)
+    print(f"Model copied to API → {dest}")
 
 
 if __name__ == "__main__":

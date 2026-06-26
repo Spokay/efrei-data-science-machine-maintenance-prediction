@@ -1,0 +1,12 @@
+services:
+  api:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models
+    environment:
+      - MODEL_PATH=/app/models/XGBoost.pkl
+      - ALLOWED_ORIGINS=*
+    restart: unless-stopped
