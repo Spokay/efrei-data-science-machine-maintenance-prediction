@@ -142,7 +142,30 @@ Quatre modèles ont été entraînés, couvrant un spectre allant du modèle lin
 
 L'accuracy n'est pas pertinente ici : un modèle qui prédirait toujours `none` obtiendrait 85 % d'accuracy sans aucune valeur opérationnelle.
 
-### 5.2 Résultats sur le jeu de test (80/20, stratifié)
+### 5.2 Courbes ROC
+
+Les courbes ROC one-vs-rest illustrent la capacité de discrimination par classe pour chaque modèle.
+
+| Logistic Regression | Random Forest |
+|---|---|
+| ![ROC LR](training/figures/roc_Logistic_Regression.png) | ![ROC RF](training/figures/roc_Random_Forest.png) |
+
+| XGBoost | TF MLP |
+|---|---|
+| ![ROC XGB](training/figures/roc_XGBoost.png) | ![ROC MLP](training/figures/roc_TF_MLP.png) |
+
+### 5.3 Matrices de confusion
+
+| Logistic Regression | Random Forest |
+|---|---|
+| ![CM LR](training/figures/confusion_matrix_Logistic_Regression.png) | ![CM RF](training/figures/confusion_matrix_Random_Forest.png) |
+
+| XGBoost | TF MLP |
+|---|---|
+| ![CM XGB](training/figures/confusion_matrix_XGBoost.png) | ![CM MLP](training/figures/confusion_matrix_TF_MLP.png) |
+
+### 5.4 Résultats sur le jeu de test (80/20, stratifié)
+
 
 | Modèle | Recall macro | F1 macro | ROC-AUC macro | PR-AUC macro |
 |---|---|---|---|---|
@@ -160,7 +183,21 @@ L'accuracy n'est pas pertinente ici : un modèle qui prédirait toujours `none` 
 
 La faible variance de la validation croisée confirme que les modèles ne sur-apprennent pas et généralisent bien.
 
-### 5.4 Analyse des résultats
+### 5.6 Importance des features et SHAP
+
+L'importance des features (gain moyen sur les splits) et l'analyse SHAP (valeurs de Shapley, interprétation causale) ont été calculées sur Random Forest et XGBoost.
+
+| Feature Importance — XGBoost | Feature Importance — Random Forest |
+|---|---|
+| ![FI XGB](training/figures/feature_importance_XGBoost.png) | ![FI RF](training/figures/feature_importance_Random_Forest.png) |
+
+**SHAP — Random Forest** (mean |SHAP value| sur le jeu de test) :
+
+![SHAP RF](training/figures/shap_Random_Forest.png)
+
+L'analyse SHAP confirme que `vibration_rms`, `temperature_motor` et `rpm` sont les features les plus déterminantes, ce qui est cohérent avec le domaine : vibration et température sont les indicateurs physiques les plus directs d'une défaillance mécanique.
+
+### 5.7 Analyse des résultats
 
 **XGBoost** est retenu comme modèle final avec un Recall macro de **0,9536** et un F1 macro de **0,9261**. Il surpasse Random Forest sur tous les critères, et dépasse largement la Régression Logistique et le TF MLP.
 

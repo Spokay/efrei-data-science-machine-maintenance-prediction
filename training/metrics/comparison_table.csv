@@ -1,0 +1,5 @@
+model,recall_macro,f1_macro,roc_auc_macro,pr_auc_macro
+Logistic_Regression,0.8594,0.6751,0.9592,0.7461
+Random_Forest,0.9461,0.9031,0.9974,0.9664
+XGBoost,0.9536,0.9261,0.9985,0.9842
+TF_MLP,0.8763,0.7333,0.9742,0.7828
