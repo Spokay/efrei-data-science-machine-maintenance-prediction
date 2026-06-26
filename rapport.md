@@ -84,7 +84,9 @@ Aucune corrélation forte (> 0,7) n'est observée entre les features numériques
 
 ### 2.7 Feature engineering
 
-**Aucun feature engineering n'a été réalisé.** Les 9 features brutes (7 numériques + 2 catégorielles) ont été utilisées directement après preprocessing. Cette décision repose sur :
+Aucun feature engineering supplémentaire n'a été réalisé. Les variables du dataset proviennent directement des capteurs industriels et possèdent déjà une forte signification métier. Les modèles basés sur les arbres, comme XGBoost et Random Forest, étant capables d'apprendre automatiquement des interactions complexes entre les variables, la création de nouvelles caractéristiques n'a pas apporté d'amélioration significative lors des premiers essais.
+
+Les 9 features brutes (7 numériques + 2 catégorielles) ont été utilisées directement après preprocessing. Cette décision repose sur :
 - Les features capteurs ont une sémantique physique directe et ne nécessitent pas de transformation métier
 - XGBoost et Random Forest capturent les interactions non-linéaires et les combinaisons de features sans qu'il soit nécessaire de les créer explicitement
 - L'analyse SHAP confirme que les features existantes sont suffisamment discriminantes (recall macro 0,954)
@@ -290,3 +292,12 @@ Le routage HTTPS est assuré par un reverse proxy (Nginx Proxy Manager) configur
 ## Conclusion
 
 XGBoost avec pondération des classes par `sample_weight` est le modèle retenu. Il atteint un **Recall macro de 0,954** et un **F1 macro de 0,926**, surpassant tous les autres modèles testés. Le pipeline sklearn intégré garantit l'absence de divergence entre entraînement et service. L'architecture API/modèle sépare clairement les responsabilités et permet des mises à jour du modèle sans interruption de service.
+
+Ce projet a permis de mettre en œuvre l'ensemble des étapes d'un pipeline de Data Science appliqué à la maintenance prédictive. À partir de données issues de capteurs industriels, une analyse exploratoire a permis de comprendre la structure du jeu de données et d'orienter les choix de prétraitement. Les transformations réalisées ont permis de construire un dataset propre et adapté à l'entraînement des modèles.
+
+Plusieurs approches de Machine Learning ont ensuite été comparées à l'aide de métriques adaptées au déséquilibre des classes. Le modèle XGBoost a obtenu les meilleures performances tout en restant interprétable grâce à l'analyse de l'importance des variables et aux explications SHAP.
+
+Le modèle retenu a ensuite été intégré dans une architecture complète reposant sur FastAPI, Docker et Nginx afin de proposer un service de prédiction exploitable. Cette approche illustre la transition entre un prototype de Data Science et une solution pouvant être intégrée dans un environnement professionnel.
+
+Au-delà des performances obtenues, ce projet montre qu'une démarche méthodique de préparation des données, de comparaison des modèles et d'interprétation des résultats constitue un élément essentiel pour développer une solution fiable d'aide à la décision. Dans un contexte industriel, une telle approche peut contribuer à anticiper les défaillances des équipements, réduire les coûts de maintenance et limiter les interruptions de production.
+
