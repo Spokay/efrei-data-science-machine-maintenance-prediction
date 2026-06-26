@@ -2,6 +2,8 @@ services:
   api:
     build:
       context: .
+      tags:
+        - registry.spokayhub.top/efrei-prediction-defaillance:latest
     ports:
       - "8000:8000"
     volumes:
