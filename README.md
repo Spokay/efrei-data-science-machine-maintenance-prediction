@@ -33,13 +33,19 @@ Primary metric: **macro recall** (imbalanced dataset — missing a failure matte
 
 ## API
 
+**Déploiement public :** `https://prediction.spokayhub.top`
+- Swagger UI : `https://prediction.spokayhub.top/docs`
+- Health check : `https://prediction.spokayhub.top/health`
+
+**Local :**
+
 ```bash
 cd API
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-Swagger UI: `http://127.0.0.1:8000/docs`
+Swagger UI local: `http://127.0.0.1:8000/docs`
 
 ### Endpoints
 
