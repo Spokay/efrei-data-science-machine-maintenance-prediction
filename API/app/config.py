@@ -1,7 +1,5 @@
 from pathlib import Path
-from typing import Any
-
-from pydantic import computed_field, field_validator
+from pydantic import computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -45,20 +43,13 @@ class Settings(BaseSettings):
     MACHINE_TYPES: list[str] = ["CNC", "Compressor", "Pump", "Robotic Arm"]
     OPERATING_MODES: list[str] = ["idle", "normal", "peak"]
 
-    # Accepte "http://a.com,http://b.com" ou '["http://a.com"]' depuis l'env.
-    ALLOWED_ORIGINS: list[str] = ["*"]
+    # Chaîne CSV : "http://a.com,http://b.com" ou "*". Splitée dans main.py.
+    ALLOWED_ORIGINS: str = "*"
 
     @computed_field
     @property
     def RAW_FEATURES(self) -> list[str]:
         return self.NUMERIC_FEATURES + self.CATEGORICAL_FEATURES
-
-    @field_validator("ALLOWED_ORIGINS", mode="before")
-    @classmethod
-    def parse_allowed_origins(cls, v: Any) -> list[str]:
-        if isinstance(v, str):
-            return v.split(",")
-        return v
 
 
 settings = Settings()
