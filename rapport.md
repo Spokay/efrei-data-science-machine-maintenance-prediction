@@ -30,6 +30,8 @@ L'architecture finale suit une séparation stricte **entraînement / service** :
 
 ### 2.2 Distribution des classes
 
+![Distribution failure_type](training/figures/target_distribution.png)
+
 | Classe | Effectif | Proportion |
 |---|---|---|
 | `none` | 20 482 | 85,2 % |
@@ -41,6 +43,8 @@ L'architecture finale suit une séparation stricte **entraînement / service** :
 Le dataset est **fortement déséquilibré** : la classe `none` représente 85 % des observations, avec un ratio de 31:1 par rapport à la classe minoritaire (`electrical`). Le taux de défaillance global est de 14,8 %. Cette contrainte a guidé tous les choix de modélisation et de métrique.
 
 ### 2.3 Valeurs manquantes
+
+![Valeurs manquantes](training/figures/missing_values.png)
 
 Cinq features numériques présentent des valeurs manquantes :
 
@@ -54,17 +58,36 @@ Cinq features numériques présentent des valeurs manquantes :
 
 Ces manques correspondent vraisemblablement à des capteurs défaillants ou non connectés selon le type de machine. La **médiane** a été retenue pour l'imputation (robuste aux valeurs extrêmes liées aux pannes).
 
-### 2.4 Statistiques descriptives des features numériques
+### 2.4 Distributions des features numériques
 
-| Feature | Min | Médiane | Max | Std |
-|---|---|---|---|---|
-| `vibration_rms` | 0,35 | 1,27 | 10,00 | 1,08 |
-| `temperature_motor` | 28,0 | 50,1 | 95,0 | 12,5 |
-| `current_phase_avg` | — | — | — | — |
-| `rpm` | — | — | 575,6 h | 150,7 |
-| `hours_since_maintenance` | 0 | 121,6 | 575,6 | 150,7 |
+![Distributions features](training/figures/feature_distributions.png)
 
-Les amplitudes sont hétérogènes (ex. `rpm` vs `vibration_rms`), ce qui justifie une normalisation avant les modèles sensibles à l'échelle.
+Les amplitudes sont hétérogènes (`rpm` ≈ 100–4000 vs `vibration_rms` ≈ 0,35–10), ce qui justifie un `StandardScaler` avant les modèles sensibles à l'échelle. Les distributions sont généralement unimodales avec des queues à droite sur `vibration_rms` et `hours_since_maintenance`.
+
+### 2.5 Boxplots par type de défaillance
+
+![Boxplots par classe](training/figures/boxplots_by_class.png)
+
+Les boxplots révèlent les features les plus discriminantes entre classes :
+- `vibration_rms` : valeurs nettement plus élevées pour `bearing` et `motor_overheat`
+- `temperature_motor` : pic sur `motor_overheat` (attendu physiquement)
+- `current_phase_avg` : signal fort pour `electrical`
+- `pressure_level` et `rpm` : discriminants pour `hydraulic`
+
+Des valeurs extrêmes sont visibles sur plusieurs features, particulièrement sur `vibration_rms` (max 10,0 vs médiane 1,27). Ces outliers **n'ont pas été filtrés** : ils correspondent à des états réels de dégradation machine et constituent une information discriminante pour la classification. Les modèles à base d'arbres (Random Forest, XGBoost) sont naturellement robustes aux outliers — ils partitionnent l'espace par seuils et ne sont pas affectés par les valeurs extrêmes contrairement aux modèles linéaires.
+
+### 2.6 Matrice de corrélation
+
+![Corrélation](training/figures/correlation_matrix.png)
+
+Aucune corrélation forte (> 0,7) n'est observée entre les features numériques. Les corrélations les plus notables sont modérées : `rpm` / `current_phase_avg` (~0,5), `pressure_level` / `rpm` (~0,4). **Aucune feature n'a été supprimée** pour multicolinéarité : le niveau de corrélation ne justifie pas de réduction, et les modèles ensemblistes (Random Forest, XGBoost) gèrent nativement la redondance partielle entre features.
+
+### 2.7 Feature engineering
+
+**Aucun feature engineering n'a été réalisé.** Les 9 features brutes (7 numériques + 2 catégorielles) ont été utilisées directement après preprocessing. Cette décision repose sur :
+- Les features capteurs ont une sémantique physique directe et ne nécessitent pas de transformation métier
+- XGBoost et Random Forest capturent les interactions non-linéaires et les combinaisons de features sans qu'il soit nécessaire de les créer explicitement
+- L'analyse SHAP confirme que les features existantes sont suffisamment discriminantes (recall macro 0,954)
 
 ---
 
@@ -174,7 +197,7 @@ Les courbes ROC one-vs-rest illustrent la capacité de discrimination par classe
 | **XGBoost** | **0,9536** | **0,9261** | **0,9985** | **0,9842** |
 | TF MLP | 0,8763 | 0,7333 | 0,9742 | 0,7828 |
 
-### 5.3 Validation croisée (5 folds stratifiés)
+### 5.5 Validation croisée (5 folds stratifiés)
 
 | Modèle | Recall macro (CV) | F1 macro (CV) | ROC-AUC (CV) |
 |---|---|---|---|
