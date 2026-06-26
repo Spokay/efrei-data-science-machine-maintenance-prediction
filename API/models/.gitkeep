@@ -1,0 +1,3 @@
+Déposez ici le modèle entraîné (pipeline scikit-learn sérialisé via joblib)
+sous le nom "XGBoost.pkl". Voir API/README.md pour le détail des features
+attendues et la configuration (MODEL_PATH).
