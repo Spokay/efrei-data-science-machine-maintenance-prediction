@@ -1,0 +1,57 @@
+{
+  "bearing": {
+    "vibration_rms": 1.31,
+    "temperature_motor": 54.45,
+    "current_phase_avg": 5.79,
+    "pressure_level": 25.7,
+    "rpm": 875.3,
+    "hours_since_maintenance": 2.85,
+    "ambient_temp": 14.5,
+    "machine_type": "CNC",
+    "operating_mode": "idle"
+  },
+  "electrical": {
+    "vibration_rms": 2.65,
+    "temperature_motor": 66.7,
+    "current_phase_avg": 17.34,
+    "pressure_level": 68.5,
+    "rpm": 2884.8,
+    "hours_since_maintenance": 176.91,
+    "ambient_temp": 13.7,
+    "machine_type": "CNC",
+    "operating_mode": "normal"
+  },
+  "hydraulic": {
+    "vibration_rms": 2.93,
+    "temperature_motor": 62.83,
+    "current_phase_avg": 10.31,
+    "pressure_level": 56.6,
+    "rpm": 2868.7,
+    "hours_since_maintenance": 325.12,
+    "ambient_temp": 10.8,
+    "machine_type": "CNC",
+    "operating_mode": "normal"
+  },
+  "motor_overheat": {
+    "vibration_rms": 3.54,
+    "temperature_motor": 79.38,
+    "current_phase_avg": 13.79,
+    "pressure_level": 87.1,
+    "rpm": 2681.3,
+    "hours_since_maintenance": 116.75,
+    "ambient_temp": 15.8,
+    "machine_type": "CNC",
+    "operating_mode": "normal"
+  },
+  "none": {
+    "vibration_rms": 0.81,
+    "temperature_motor": 49.51,
+    "current_phase_avg": 5.1,
+    "pressure_level": 23.6,
+    "rpm": 860.9,
+    "hours_since_maintenance": 273.8,
+    "ambient_temp": 13.9,
+    "machine_type": "CNC",
+    "operating_mode": "idle"
+  }
+}
