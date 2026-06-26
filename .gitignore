@@ -1,0 +1,7 @@
+.idea
+**.env
+__pycache__
+*.pyc
+training/models/
+training/figures/
+training/metrics/
