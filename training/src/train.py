@@ -27,6 +27,7 @@ from evaluation import (
     cross_validate_model,
     plot_confusion_matrix,
     plot_feature_importance,
+    plot_pr_curves,
     plot_roc_curves,
     plot_shap_summary,
     save_comparison_table,
@@ -87,6 +88,7 @@ def train_sklearn_model(pipeline, X_train, y_train, X_test, y_test,
     metrics = compute_metrics(y_test, y_pred, y_proba, label)
     plot_confusion_matrix(y_test, y_pred, label)
     plot_roc_curves(y_test, y_proba, pipeline.classes_, label)
+    plot_pr_curves(y_test, y_proba, pipeline.classes_, label)
 
     path = MODELS_DIR / f"{label}.pkl"
     joblib.dump(pipeline, path)
@@ -119,6 +121,7 @@ def train_xgboost_model(X_train, y_train, X_test, y_test,
     metrics = compute_metrics(y_test, y_pred, y_proba, "XGBoost")
     plot_confusion_matrix(y_test, y_pred, "XGBoost")
     plot_roc_curves(y_test, y_proba, label_encoder.classes_, "XGBoost")
+    plot_pr_curves(y_test, y_proba, label_encoder.classes_, "XGBoost")
 
     xgb_clf = pipeline.named_steps["clf"]
     plot_feature_importance(xgb_clf.feature_importances_, feature_names, "XGBoost")
@@ -163,6 +166,7 @@ def train_tf_model(X_train_t: np.ndarray, y_train_enc: np.ndarray,
     metrics = compute_metrics(y_test, y_pred, y_proba, "TF_MLP")
     plot_confusion_matrix(y_test, y_pred, "TF_MLP")
     plot_roc_curves(y_test, y_proba, label_encoder.classes_, "TF_MLP")
+    plot_pr_curves(y_test, y_proba, label_encoder.classes_, "TF_MLP")
 
     model.save(str(MODELS_DIR / "tf_model.keras"))
     print(f"TF model saved → {MODELS_DIR / 'tf_model.keras'}")

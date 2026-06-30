@@ -66,7 +66,12 @@ roc_path = FIGURES_DIR / f"roc_{selected}.png"
 if cm_path.exists():
     col_a.image(str(cm_path), caption=f"Matrice de confusion — {model_files[selected]}", width="stretch")
 if roc_path.exists():
-    col_b.image(str(roc_path), caption=f"Courbe ROC — {model_files[selected]}", width="stretch")
+    col_b.image(str(roc_path), caption=f"Courbe ROC (optimiste sur classes déséquilibrées) — {model_files[selected]}", width="stretch")
+
+col_pr, col_empty = st.columns(2)
+pr_path = FIGURES_DIR / f"pr_{selected}.png"
+if pr_path.exists():
+    col_pr.image(str(pr_path), caption=f"Courbe Précision-Rappel (à privilégier, déséquilibre 31:1) — {model_files[selected]}", width="stretch")
 
 col_c, col_d = st.columns(2)
 fi_path = FIGURES_DIR / f"feature_importance_{selected}.png"

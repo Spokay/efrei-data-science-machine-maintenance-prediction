@@ -8,6 +8,7 @@ from sklearn.metrics import (
     average_precision_score,
     classification_report,
     f1_score,
+    precision_recall_curve,
     recall_score,
     roc_auc_score,
     roc_curve,
@@ -61,7 +62,8 @@ def plot_confusion_matrix(y_true, y_pred, label: str):
 def plot_roc_curves(y_true, y_proba, classes, label: str):
     _ensure_dirs()
     lb = LabelBinarizer()
-    y_bin = lb.fit_transform(y_true)
+    lb.fit(classes)  # fit sur toutes les classes connues, pas seulement celles présentes dans y_true
+    y_bin = lb.transform(y_true)
     y_proba_arr = np.array(y_proba)
 
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -76,6 +78,29 @@ def plot_roc_curves(y_true, y_proba, classes, label: str):
     ax.legend(fontsize=8)
     plt.tight_layout()
     path = FIGURES_DIR / f"roc_{label.replace(' ', '_')}.png"
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    print(f"Saved {path}")
+
+
+def plot_pr_curves(y_true, y_proba, classes, label: str):
+    _ensure_dirs()
+    lb = LabelBinarizer()
+    lb.fit(classes)
+    y_bin = lb.transform(y_true)
+    y_proba_arr = np.array(y_proba)
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    for i, cls in enumerate(classes):
+        precision, recall, _ = precision_recall_curve(y_bin[:, i], y_proba_arr[:, i])
+        ap = average_precision_score(y_bin[:, i], y_proba_arr[:, i])
+        ax.plot(recall, precision, label=f"{cls} (AP={ap:.2f})")
+    ax.set_xlabel("Recall")
+    ax.set_ylabel("Precision")
+    ax.set_title(f"Precision-Recall Curves {label}")
+    ax.legend(fontsize=8)
+    plt.tight_layout()
+    path = FIGURES_DIR / f"pr_{label.replace(' ', '_')}.png"
     fig.savefig(path, dpi=150)
     plt.close(fig)
     print(f"Saved {path}")
