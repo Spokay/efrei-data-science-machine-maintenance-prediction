@@ -263,23 +263,19 @@ La validation des entrées (types, bornes, catégories autorisées) est assurée
 
 ### 6.3 Containerisation et déploiement
 
-L'API est containerisée via Docker et déployée sur un serveur dédié. Le modèle est injecté via un **bind mount** (`./models:/app/models`) afin de découpler le cycle de vie du modèle du cycle de vie du container : mettre à jour le modèle ne nécessite pas de reconstruire l'image.
+L'ensemble de l'application est containerisé via Docker Compose. Deux services sont définis à la racine du projet :
 
-```yaml
-volumes:
-  - ./models:/app/models
-```
+- **`prediction-defaillance-api`** — service FastAPI, charge le modèle via bind mount (`./API/models:/app/models`). Le bind mount découple le cycle de vie du modèle du container : mettre à jour le modèle ne nécessite pas de reconstruire l'image. L'API n'est **pas exposée publiquement** : elle est uniquement accessible sur le réseau Docker interne `maintenance-network`.
+- **`prediction-defaillance-front`** — service Streamlit, construit depuis `front/Dockerfile`. Connecté au réseau `maintenance-network` pour joindre l'API via son nom de service (`http://prediction-defaillance-api:8000`), et au réseau externe du reverse proxy pour être exposé publiquement.
 
-L'API est accessible publiquement à l'adresse :
+Le frontend est accessible publiquement à l'adresse :
 
 | Ressource | URL |
 |---|---|
-| Endpoint racine | `https://prediction.spokayhub.top` |
-| Documentation interactive (Swagger) | `https://prediction.spokayhub.top/docs` |
-| Health check | `https://prediction.spokayhub.top/health` |
-| Prédiction | `POST https://prediction.spokayhub.top/predict` |
+| Application Streamlit | `https://prediction.spokayhub.top` |
+| Code source (GitHub) | `https://github.com/Spokay/efrei-data-science-machine-maintenance-prediction` |
 
-Le routage HTTPS est assuré par un reverse proxy (Nginx Proxy Manager) configuré en amont du container FastAPI. Le container est connecté au réseau Docker `nginx_proxy_manager_nginx_network` pour être accessible via le proxy sans exposer directement le port 8000.
+Le routage HTTPS est assuré par un reverse proxy (Nginx Proxy Manager). Seul le container frontend est connecté au réseau du proxy — l'API reste isolée sur le réseau interne et n'est joignable que depuis le frontend.
 
 ### 6.4 Reproductibilité
 
