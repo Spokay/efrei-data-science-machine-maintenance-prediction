@@ -80,7 +80,7 @@ Des valeurs extrêmes sont visibles sur plusieurs features, particulièrement su
 
 ![Corrélation](training/figures/correlation_matrix.png)
 
-Aucune corrélation forte (> 0,7) n'est observée entre les features numériques. Les corrélations les plus notables sont modérées : `rpm` / `current_phase_avg` (~0,5), `pressure_level` / `rpm` (~0,4). **Aucune feature n'a été supprimée** pour multicolinéarité : le niveau de corrélation ne justifie pas de réduction, et les modèles ensemblistes (Random Forest, XGBoost) gèrent nativement la redondance partielle entre features.
+Les corrélations les plus notables sont : `pressure_level` / `current_phase_avg` (~0,88), `vibration_rms` / `current_phase_avg` (~0,85). **Aucune feature n'a été supprimée** pour multicolinéarité : le niveau de corrélation ne justifie pas de réduction, et les modèles ensemblistes (Random Forest, XGBoost) gèrent nativement la redondance partielle entre features.
 
 ### 2.7 Feature engineering
 
