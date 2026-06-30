@@ -9,11 +9,10 @@ from utils.ui import render_api_sidebar
 st.set_page_config(page_title="Comparaison des modèles", page_icon="🤖", layout="wide")
 render_api_sidebar()
 
-st.title("🤖 Comparaison des modèles")
+st.title("Comparaison des modèles")
 
 comp = load_comparison_table()
 best_row = comp.sort_values("recall_macro", ascending=False).iloc[0]
-
 st.markdown(
     f"**Modèle retenu en production : `{best_row['model']}`** "
     f"(Recall macro = {best_row['recall_macro']:.4f} — métrique prioritaire compte tenu "

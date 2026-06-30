@@ -16,11 +16,12 @@ import joblib
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from sklearn.metrics import classification_report
-from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import classification_report, f1_score, recall_score, roc_auc_score
+from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit
+from sklearn.preprocessing import LabelBinarizer, LabelEncoder
 from sklearn.utils.class_weight import compute_class_weight
 
-from config import API_MODELS_DIR, FEATURES_CAT, FEATURES_NUM, FIGURES_DIR, METRICS_DIR, MODELS_DIR
+from config import API_MODELS_DIR, CV_FOLDS, FEATURES_CAT, FEATURES_NUM, FIGURES_DIR, METRICS_DIR, MODELS_DIR, RANDOM_STATE
 from evaluation import (
     compute_metrics,
     cross_validate_model,
@@ -125,8 +126,6 @@ def train_xgboost_model(X_train, y_train, X_test, y_test,
     joblib.dump(pipeline, MODELS_DIR / "XGBoost.pkl")
     print(f"Model saved to : {MODELS_DIR / 'XGBoost.pkl'}")
 
-    cross_validate_model(pipeline, X_train, y_train_enc, "XGBoost")
-
     return metrics
 
 
@@ -140,11 +139,14 @@ def train_tf_model(X_train_t: np.ndarray, y_train_enc: np.ndarray,
     class_weights = compute_tf_class_weights(y_train_enc)
     model = build_tf_mlp(X_train_t.shape[1], n_classes)
 
+    sss = StratifiedShuffleSplit(n_splits=1, test_size=0.1, random_state=RANDOM_STATE)
+    tr_idx, val_idx = next(sss.split(X_train_t, y_train_enc))
+
     model.fit(
-        X_train_t, y_train_enc,
+        X_train_t[tr_idx], y_train_enc[tr_idx],
         epochs=50,
         batch_size=256,
-        validation_split=0.1,
+        validation_data=(X_train_t[val_idx], y_train_enc[val_idx]),
         class_weight=class_weights,
         callbacks=[tf.keras.callbacks.EarlyStopping(
             monitor="val_loss", patience=5, restore_best_weights=True
@@ -170,6 +172,59 @@ def train_tf_model(X_train_t: np.ndarray, y_train_enc: np.ndarray,
     return metrics
 
 
+def cross_validate_tf_model(X_train_t: np.ndarray, y_train_enc: np.ndarray,
+                             label_encoder: LabelEncoder) -> dict:
+    print(f"\n{'='*50}")
+    print("CV: TensorFlow MLP")
+    cv = StratifiedKFold(n_splits=CV_FOLDS, shuffle=True, random_state=RANDOM_STATE)
+    n_features, n_classes = X_train_t.shape[1], len(label_encoder.classes_)
+    lb = LabelBinarizer()
+    lb.fit(label_encoder.classes_)
+    recalls, f1s, aucs = [], [], []
+
+    for fold, (tr_idx, val_idx) in enumerate(cv.split(X_train_t, y_train_enc), 1):
+        X_fold_tr, X_fold_val = X_train_t[tr_idx], X_train_t[val_idx]
+        y_fold_tr, y_fold_val = y_train_enc[tr_idx], y_train_enc[val_idx]
+
+        sss = StratifiedShuffleSplit(n_splits=1, test_size=0.1, random_state=RANDOM_STATE)
+        es_tr, es_val = next(sss.split(X_fold_tr, y_fold_tr))
+
+        model = build_tf_mlp(n_features, n_classes)
+        cw = compute_tf_class_weights(y_fold_tr[es_tr])
+        model.fit(
+            X_fold_tr[es_tr], y_fold_tr[es_tr],
+            epochs=50, batch_size=256, verbose=0,
+            class_weight=cw,
+            validation_data=(X_fold_tr[es_val], y_fold_tr[es_val]),
+            callbacks=[tf.keras.callbacks.EarlyStopping(
+                monitor="val_loss", patience=5, restore_best_weights=True
+            )],
+        )
+
+        y_proba = model.predict(X_fold_val, verbose=0)
+        y_true_str = label_encoder.inverse_transform(y_fold_val)
+        y_pred_str = label_encoder.inverse_transform(np.argmax(y_proba, axis=1))
+
+        recalls.append(recall_score(y_true_str, y_pred_str, average="macro", zero_division=0))
+        f1s.append(f1_score(y_true_str, y_pred_str, average="macro", zero_division=0))
+        aucs.append(roc_auc_score(lb.transform(y_true_str), y_proba, multi_class="ovr", average="macro"))
+        print(f"  Fold {fold}: Recall={recalls[-1]:.4f}  F1={f1s[-1]:.4f}  AUC={aucs[-1]:.4f}")
+
+    result = {
+        "model": "TF_MLP",
+        "cv_recall_mean": round(np.mean(recalls), 4),
+        "cv_recall_std":  round(np.std(recalls), 4),
+        "cv_f1_mean":     round(np.mean(f1s), 4),
+        "cv_f1_std":      round(np.std(f1s), 4),
+        "cv_auc_mean":    round(np.mean(aucs), 4),
+        "cv_auc_std":     round(np.std(aucs), 4),
+    }
+    print(f"CV Recall={result['cv_recall_mean']}±{result['cv_recall_std']}  "
+          f"F1={result['cv_f1_mean']}±{result['cv_f1_std']}  "
+          f"AUC={result['cv_auc_mean']}±{result['cv_auc_std']}")
+    return result
+
+
 def main():
     MODELS_DIR.mkdir(exist_ok=True)
     FIGURES_DIR.mkdir(exist_ok=True)
@@ -183,6 +238,8 @@ def main():
 
     le = LabelEncoder()
     le.fit(y_train)
+    y_train_enc = le.transform(y_train)
+    y_test_enc = le.transform(y_test)
     joblib.dump(le, MODELS_DIR / "label_encoder.pkl")
 
     all_metrics = []
@@ -201,16 +258,16 @@ def main():
     feature_names = _get_feature_names(rf.named_steps["prep"])
     plot_feature_importance(rf.named_steps["clf"].feature_importances_, feature_names, "Random_Forest")
 
-    # 3. XGBoost
+    # 3. XGBoost — CV sur labels encodés (entiers), cohérent avec l'entraînement
+    cv_metrics.append(cross_validate_model(get_xgboost(n_classes=len(le.classes_)), X_train, y_train_enc, "XGBoost"))
     all_metrics.append(train_xgboost_model(X_train, y_train, X_test, y_test, le, feature_names))
 
-    # 4. TensorFlow MLP
+    # 4. TensorFlow MLP — CV stratifié puis entraînement final
     preprocessor = build_preprocessor()
     X_train_t = preprocessor.fit_transform(X_train)
     X_test_t = preprocessor.transform(X_test)
-    y_train_enc = le.transform(y_train)
-    y_test_enc = le.transform(y_test)
 
+    cv_metrics.append(cross_validate_tf_model(X_train_t, y_train_enc, le))
     all_metrics.append(train_tf_model(X_train_t, y_train_enc, X_test_t, y_test_enc, le))
 
     # SHAP on Random Forest
